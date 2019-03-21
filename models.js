@@ -2,12 +2,13 @@ const { ranks, suits } = require("./reference");
 
 class Game {
   constructor(numPlayers) {
+    this.dealer = new Dealer();
     this.numPlayers = numPlayers;
     this.players = [];
     this.currentPlayer = {};
     this.currentIndex = 0;
-    this.currentPlayers = [];
-    this.win = false;
+    this.playingPlayers = [];
+    this.scoringPlayers = [];
   }
 
   createPlayers() {
@@ -49,18 +50,43 @@ class Game {
   }
 
   addPlayerToGame(player) {
-    this.currentPlayers.push(player);
+    this.playingPlayers.push(player);
     return player;
   }
 
   removePlayerFromGame() {
-    let removedPlayer = this.currentPlayers.splice(this.currentIndex, 1);
-    this.currentPlayer = this.currentPlayers[this.currentIndex];
+    let removedPlayer = this.playingPlayers.splice(this.currentIndex, 1);
+    this.currentIndex = Math.min(
+      this.currentIndex,
+      this.playingPlayers.length - 1
+    );
+    this.currentPlayer = this.playingPlayers[this.currentIndex];
     return removedPlayer[0];
   }
 
-  playerWin(player) {
-    player.win();
+  addPlayerToScoring(player) {
+    this.scoringPlayers.push(player);
+    return player;
+  }
+
+  removePlayerFromScoring() {
+    let removedPlayer = this.scoringPlayers.splice(this.currentIndex, 1);
+    this.currentIndex = Math.min(
+      this.currentIndex,
+      this.scoringPlayers.length - 1
+    );
+    this.currentPlayer = this.scoringPlayers[this.currentIndex];
+    return removedPlayer[0];
+  }
+
+  clearScoring() {
+    this.scoringPlayers = [];
+    return this.scoringPlayers;
+  }
+
+  deletePlayer(player) {
+    this.players = this.players.filter(e => e.name !== player.name);
+    return player;
   }
 }
 
@@ -140,7 +166,7 @@ class Player {
   }
 
   win() {
-    this.cash += amount * 2;
+    this.cash += +this.bid * 2;
     this.bid = 0;
     return this.cash;
   }
@@ -148,6 +174,18 @@ class Player {
   lose() {
     this.bid = 0;
     return this.cash;
+  }
+
+  tie() {
+    this.cash += +this.bid;
+    this.bid = 0;
+    return this.cash;
+  }
+
+  clearHand() {
+    this.hand = [];
+    this.handValue = 0;
+    return this.hand;
   }
 }
 
@@ -159,8 +197,20 @@ class Dealer {
 
   receive(card) {
     this.hand.push(card);
+    this.handValue += card.value;
+    return this.hand;
+  }
+
+  bust() {
+    this.handValue = 0;
+    return this.handValue;
+  }
+
+  clearHand() {
+    this.hand = [];
+    this.handValue = 0;
     return this.hand;
   }
 }
 
-module.exports = { Game, Card, Deck, Player };
+module.exports = { Game, Card, Deck, Player, Dealer };
