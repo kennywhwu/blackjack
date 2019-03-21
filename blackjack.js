@@ -4,21 +4,45 @@
 
 // One of the goals of the exercise is for us to get a feel for how you write code in the presence of incomplete requirements. We're looking for a finished product that (a) works correctly, (b) is a pleasure to use, and (c) is backed by clean code that is readily understood.
 
+const readline = require("readline").createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
 const { Deck, Player, Game } = require("./models");
 
 function startGame() {
-  let game = new Game();
-  game.start();
-  game.dealCardToPlayer(0);
+  readline.question(`How many players? `, numPlayers => {
+    console.log(`There will be ${numPlayers} players!`);
+    let game = new Game(numPlayers);
+    game.createPlayers();
+    game.createDeck();
+
+    console.log(`All players start with $1000`);
+    bid(game);
+
+    // readline.close();
+  });
 }
 
-function createDeck() {
-  let deck = new Deck();
-  deck.create();
-  deck.shuffle();
-  console.log(deck);
+function bid(game) {
+  let player = game.currentPlayer;
+  readline.question(
+    `${player.name} ($${player.cash}): How much will you bet? `,
+    bet => {
+      game.playerBid(player, bet);
+      console.log(`${player.name} bet $${bet}, and has $${player.cash} left.`);
+      if (game.currentPlayers.length === game.players.length) {
+        // playHand()
+        console.log("Ready to start!");
+      } else {
+        game.switchPlayers();
+        bid(game);
+      }
+    }
+  );
 }
 
-function deal() {}
+function playHand(player) {}
 
 startGame();

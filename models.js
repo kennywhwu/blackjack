@@ -1,23 +1,62 @@
 const { ranks, suits } = require("./reference");
 
 class Game {
-  constructor() {
+  constructor(numPlayers) {
+    this.numPlayers = numPlayers;
     this.players = [];
+    this.currentPlayer = {};
+    this.currentIndex = 0;
+    this.currentPlayers = [];
     this.win = false;
   }
 
-  start() {
+  createPlayers() {
+    for (let i = 1; i <= this.numPlayers; i++) {
+      this.players.push(new Player(`Player ${i}`));
+    }
+    this.currentPlayer = this.players[this.currentIndex];
+    return this.players;
+  }
+
+  createDeck() {
     let deck = new Deck();
     deck.create();
     deck.shuffle();
     this.deck = deck;
-    this.players.push(new Player());
     return this.deck;
   }
 
+  switchPlayers() {
+    if (this.currentIndex < this.players.length - 1) {
+      this.currentIndex++;
+    } else {
+      this.currentIndex = 0;
+    }
+    this.currentPlayer = this.players[this.currentIndex];
+    return this.currentPlayer;
+  }
+
   dealCardToPlayer(player) {
-    this.players[player].receive(this.deck.dealCard());
-    return this.players;
+    let dealtCard = this.deck.dealCard();
+    this.players[player].receive(dealtCard);
+    return player;
+  }
+
+  playerBid(player, amount) {
+    player.bet(amount);
+    this.addPlayerToGame(player);
+  }
+
+  addPlayerToGame(player) {
+    this.currentPlayers.push(player);
+  }
+
+  removePlayerFromGame(player) {
+    this.currentPlayers.splice(this.currentIndex, 1);
+  }
+
+  playerWin(player) {
+    player.win();
   }
 }
 
@@ -25,6 +64,17 @@ class Card {
   constructor(rank, suit) {
     this.rank = rank;
     this.suit = suit;
+    this.value = this.assignValue();
+  }
+
+  assignValue() {
+    if (this.rank === "J" || this.rank === "Q" || this.rank === "K") {
+      this.value = 10;
+    } else if (this.rank === "A") {
+      this.value = 11;
+    } else {
+      this.value = +this.rank;
+    }
   }
 }
 
@@ -65,8 +115,10 @@ class Deck {
 }
 
 class Player {
-  constructor() {
+  constructor(name) {
+    this.name = name;
     this.hand = [];
+    this.handValue = 0;
     this.cash = 1000;
     this.bid = 0;
   }
@@ -76,14 +128,32 @@ class Player {
     return this.hand;
   }
 
-  bet(num) {
-    this.cash -= num;
-    return num;
+  bet(amount) {
+    this.cash -= amount;
+    this.bid += amount;
+    return amount;
   }
 
-  hit() {}
+  win() {
+    this.cash += amount * 2;
+    this.bid = 0;
+  }
 
-  stay() {}
+  lose() {
+    this.bid = 0;
+  }
+}
+
+class Dealer {
+  constructor() {
+    this.hand = [];
+    this.handValue = 0;
+  }
+
+  receive(card) {
+    this.hand.push(card);
+    return this.hand;
+  }
 }
 
 module.exports = { Game, Card, Deck, Player };
