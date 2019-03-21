@@ -9,7 +9,7 @@ const readline = require("readline").createInterface({
   output: process.stdout,
 });
 
-const { Deck, Player, Game } = require("./models");
+const { Card, Deck, Player, Game } = require("./models");
 
 function startGame() {
   readline.question(`How many players? `, numPlayers => {
@@ -19,30 +19,85 @@ function startGame() {
     game.createDeck();
 
     console.log(`All players start with $1000`);
-    bid(game);
+    bidding(game);
 
     // readline.close();
   });
 }
 
-function bid(game) {
+function bidding(game) {
   let player = game.currentPlayer;
   readline.question(
     `${player.name} ($${player.cash}): How much will you bet? `,
     bet => {
       game.playerBid(player, bet);
       console.log(`${player.name} bet $${bet}, and has $${player.cash} left.`);
+      game.switchPlayers();
+      // After all players have made their bets, start hand
       if (game.currentPlayers.length === game.players.length) {
-        // playHand()
-        console.log("Ready to start!");
+        startHand(game);
       } else {
-        game.switchPlayers();
-        bid(game);
+        bidding(game);
       }
     }
   );
 }
 
-function playHand(player) {}
+function startHand(game) {
+  let player = game.currentPlayer;
+  let card1 = game.dealCardToPlayer(player);
+  let card2 = game.dealCardToPlayer(player);
+  console.log(
+    `${player.name} received ${card1.rank} of ${card1.suit} and ${
+      card2.rank
+    } of ${card2.suit}: Total is ${player.handValue}`
+  );
+  if (player.handValue === 21) {
+    stay(game);
+  } else {
+    hitOrStay(game);
+  }
+}
+
+function hitOrStay(game) {
+  readline.question("[H]it or [S]tay? ", key => {
+    if (key === "h" || key === "H") {
+      hit(game);
+    } else if (key === "s" || key === "S") {
+      stay(game);
+      startHand(game);
+    }
+  });
+}
+
+function hit(game) {
+  let player = game.currentPlayer;
+  let card = game.dealCardToPlayer(player);
+  console.log(
+    `${player.name} received ${card.rank} of ${card.suit}: Total is ${
+      player.handValue
+    }`
+  );
+  if (player.handValue > 21) {
+    bust(game);
+    startHand(game);
+  } else if (player.handValue === 21) {
+    stay(game);
+  } else {
+    hitOrStay(game);
+  }
+}
+
+function stay(game) {
+  game.removePlayerFromGame();
+  game.switchPlayers();
+}
+
+function bust(game) {
+  let player = game.currentPlayer;
+  player.lose();
+  console.log(`Bust! ${player.name} cash is ${player.cash}`);
+  game.removePlayerFromGame();
+}
 
 startGame();

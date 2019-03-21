@@ -38,21 +38,25 @@ class Game {
 
   dealCardToPlayer(player) {
     let dealtCard = this.deck.dealCard();
-    this.players[player].receive(dealtCard);
-    return player;
+    player.receive(dealtCard);
+    return dealtCard;
   }
 
   playerBid(player, amount) {
     player.bet(amount);
     this.addPlayerToGame(player);
+    return player;
   }
 
   addPlayerToGame(player) {
     this.currentPlayers.push(player);
+    return player;
   }
 
-  removePlayerFromGame(player) {
-    this.currentPlayers.splice(this.currentIndex, 1);
+  removePlayerFromGame() {
+    let removedPlayer = this.currentPlayers.splice(this.currentIndex, 1);
+    this.currentPlayer = this.currentPlayers[this.currentIndex];
+    return removedPlayer[0];
   }
 
   playerWin(player) {
@@ -69,11 +73,11 @@ class Card {
 
   assignValue() {
     if (this.rank === "J" || this.rank === "Q" || this.rank === "K") {
-      this.value = 10;
+      return 10;
     } else if (this.rank === "A") {
-      this.value = 11;
+      return 11;
     } else {
-      this.value = +this.rank;
+      return +this.rank;
     }
   }
 }
@@ -125,6 +129,7 @@ class Player {
 
   receive(card) {
     this.hand.push(card);
+    this.handValue += card.value;
     return this.hand;
   }
 
@@ -137,10 +142,12 @@ class Player {
   win() {
     this.cash += amount * 2;
     this.bid = 0;
+    return this.cash;
   }
 
   lose() {
     this.bid = 0;
+    return this.cash;
   }
 }
 
