@@ -1,3 +1,5 @@
+// Models file for all defined classes in Blackjack game
+
 const { ranks, suits } = require("./reference");
 
 class Game {
@@ -37,9 +39,9 @@ class Game {
     return this.currentPlayer;
   }
 
-  dealCardToPlayer(player) {
+  dealCardToPlayer(player, secondHand) {
     let dealtCard = this.deck.dealCard();
-    player.receive(dealtCard);
+    player.receive(dealtCard, secondHand);
     return dealtCard;
   }
 
@@ -114,14 +116,13 @@ class Deck {
   }
 
   create() {
-    // let cards = [];
+    this.cards = [];
     for (let i = 0; i < suits.length; i++) {
       for (let j = 0; j < ranks.length; j++) {
         let card = new Card(ranks[j], suits[i]);
         this.cards.push(card);
       }
     }
-    // this.cards = cards;
     return this.cards;
   }
 
@@ -153,9 +154,14 @@ class Player {
     this.bid = 0;
   }
 
-  receive(card) {
-    this.hand.push(card);
-    this.handValue += card.value;
+  receive(card, secondHand) {
+    if (secondHand === "split") {
+      this.secondHand.push(card);
+      this.secondHandValue += card.value;
+    } else {
+      this.hand.push(card);
+      this.handValue += card.value;
+    }
     return this.hand;
   }
 
@@ -165,14 +171,32 @@ class Player {
     return amount;
   }
 
-  win() {
-    this.cash += +this.bid * 2;
-    this.bid = 0;
+  split() {
+    this.secondHand = [this.hand.pop()];
+    this.handValue /= 2;
+    this.secondHandValue = this.handValue;
+    this.cash -= this.bid;
+    this.bid *= 2;
+    return this.secondHand;
+  }
+
+  win(secondHand) {
+    if (secondHand) {
+      this.cash += +this.bid;
+      this.bid /= 2;
+    } else {
+      this.cash += +this.bid * 2;
+      this.bid = 0;
+    }
     return this.cash;
   }
 
-  lose() {
-    this.bid = 0;
+  lose(secondHand) {
+    if (secondHand) {
+      this.bid /= 2;
+    } else {
+      this.bid = 0;
+    }
     return this.cash;
   }
 
